@@ -6,7 +6,7 @@ const root = process.cwd();
 const excluded = new Set(['.git', '.github', '.imd', '.agents', '.aws', '.codex', '.playwright-mcp', 'test']);
 const forbiddenDirectories = new Set(['node_modules', '.vite', '.cache', '.npm', 'npm-cache', 'playwright-report', 'test-results']);
 const reportPath = 'artifacts/package-size.json';
-const allowedRoot = new Set(['.gitignore', 'README.md', 'DESIGN.md', 'THIRD_PARTY.md', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'src', 'public', 'dist', 'scripts', 'tests', 'design', 'licenses', 'artifacts']);
+const allowedRoot = new Set(['.gitignore', '.imd-responses.json', 'README.md', 'DESIGN.md', 'THIRD_PARTY.md', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'src', 'public', 'dist', 'scripts', 'tests', 'design', 'licenses', 'artifacts']);
 
 async function inventory(directory) {
   const files = [];

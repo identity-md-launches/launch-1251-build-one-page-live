@@ -63,6 +63,8 @@ Spacing tokens `--space-1` through `--space-7` define **4, 8, 12, 16, 24, 32, 48
 - **At 368px and below (`23rem`):** margins become 16px, daily metrics become three full-width label/value rows, and the decorative questions icon is removed.
 - **At a main-container width of `17rem` or less:** the toolbar wraps and all metric/service grids become one column. Because this query is relative to text size, it also handles enlarged text without imposing a fixed content height.
 
+The oracle section uses a direct heading with no subtitle; its heading row is 44px at 390px and 1440px, and 27px at 320px where the decorative icon is hidden.
+
 The body has a 320px minimum width; no `overflow-x: hidden` masks problems. At 390 × 844, the title, explanation, Refresh control and both primary values are visible without scrolling. Reflow was checked at 320, 390, 704, 768 and 1440px, plus 200% root-text enlargement. Browser-native zoom is unverified.
 
 ## Elevation & Depth
@@ -80,9 +82,10 @@ The component patterns live in `src/App.tsx`; live state is separated into `src/
 - **`Brand`**: local network mark, IMD wordmark and desktop caption. The adjacent About link is an ordinary link.
 - **`Metric`**: `label`, optional numeric `value`, optional `description`, `primary` and `unavailable`. It renders semantic `dt`/`dd` groups. Missing data uses a static skeleton with a loading name, or a dash with an unavailable name; it never substitutes zero. Minimum count area height preserves surrounding layout.
 - **Refresh/Retry**: one peach native button, at least 44px tall. Its accessible name includes its visible action. While a fetch is active it stays focusable with `aria-disabled`; the request guard prevents duplicate work. The failure state uses Retry.
-- **Freshness and connection note**: distinct Live / Refreshing / Connecting / Unavailable states. A stable polite announcement region reports fetch outcomes; the once-per-second age is not a live region. Error text gives the recovery step.
+- **Freshness and connection note**: distinct Live / Refreshing / Connecting / Unavailable states. A stable polite announcement region reports fetch outcomes; the once-per-second age is not a live region. Error text gives the recovery step. Refreshing shows the original update age and “Showing last received values” until success, failure or the 12-second timeout.
 - **`Service`**: native description-list name/status pairs. Explicit booleans produce Up or Down; absent data produces Checking or Unknown. Color and the status dot supplement the word.
-- **`QuestionCard`**: native `details`/`summary` disclosure with a status badge, chain name, attestation age, two-line question and Read/Collapse hint. The whole summary is the target. Enter and Space work without custom keyboard handlers. Stable API IDs preserve open state during successful refreshes.
+- **`QuestionCard`**: native `details`/`summary` disclosure with a status badge, chain name, attestation age, two-line question and Read/Collapse hint. The whole summary is the target. Enter and Space work without custom keyboard handlers. Stable API IDs preserve the mounted disclosure and open state during pending and successful refreshes, including delayed polling and tab resume.
+- **`QuestionResults`**: owns the question list and observes its rendered height, including expansion and responsive reflow. During a refresh the same keyed `QuestionCard` elements remain mounted. After failure, only the measured height is retained, with unavailable question content removed. `.questions-reserved` keeps its message 16px from the viewport top while scrolling inside the reserved area. Retry uses a loading message in the same area until new data arrives. Recovery or genuinely changed results can change the list height.
 - **`QuestionLoading` / empty states**: static skeleton shapes; distinct no-requests and unavailable copy. A successful empty list invites another refresh and explains that new requests appear automatically.
 - **`Icon`**: one inline SVG set with 1.5px strokes and `currentColor`. All icons are decorative and hidden from assistive technology.
 - **Footer**: plain context line and an ordinary Explore IMD link.

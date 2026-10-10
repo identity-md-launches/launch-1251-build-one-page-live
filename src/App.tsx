@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { attestationAge, chainName, REFRESH_INTERVAL_MS } from './api';
 import type { OracleQuestion } from './api';
@@ -69,6 +70,35 @@ function QuestionLoading() {
   </div>;
 }
 
+function QuestionResults({ questions, now, failed }: {
+  questions: OracleQuestion[] | undefined; now: number; failed: boolean;
+}) {
+  const content = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!questions || !content.current) return;
+    const element = content.current;
+    const measure = () => setHeight(element.getBoundingClientRect().height);
+    measure();
+    // Include disclosure changes and reflow, not just the initial list size.
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [questions]);
+
+  // Store only geometry after failure, never unavailable question data.
+  const reserved = questions === undefined && height > 0;
+  return <div ref={content} className={`questions-content${reserved ? ' questions-reserved' : ''}`} style={reserved ? { minBlockSize: height } : undefined}>
+    {questions ? questions.length > 0
+      ? <ol className="questions-list">{questions.map((request) => <QuestionCard request={request} now={now} key={request.id} />)}</ol>
+      : <div className="empty-state"><Icon name="globe" /><h3>No oracle questions yet</h3><p>New requests will appear here automatically.<br />You can also select Refresh to check again.</p></div>
+      : failed ? <div className="empty-state"><Icon name="globe" /><h3>Questions are unavailable</h3><p>Retry the connection above to load the latest questions.</p></div>
+      : reserved ? <div className="empty-state"><Icon name="globe" /><h3>Loading oracle questions</h3><p>Fetching the latest questions from the network.</p></div>
+      : <QuestionLoading />}
+  </div>;
+}
+
 export function App() {
   const { phase, snapshot, updatedAt, now, refresh } = useLiveNetwork();
   const busy = phase === 'loading' || phase === 'refreshing';
@@ -96,7 +126,7 @@ export function App() {
         </dl>
         <div className={`connection-note ${failed ? 'connection-error' : ''}`}>
           {failed ? <><span className="error-symbol" aria-hidden="true">!</span><div><p>Can't reach the network right now</p><span>Check your connection and select Retry.</span></div></>
-            : <><Icon name="refresh" /><span>{phase === 'loading' ? 'Getting a fresh look at the swarm…' : `Fetched from IMD. Refreshes every ${REFRESH_INTERVAL_MS / 1_000} seconds.`}</span></>}
+            : <><Icon name="refresh" /><span>{phase === 'loading' ? 'Getting a fresh look at the swarm…' : phase === 'refreshing' ? 'Refreshing network data. Showing last received values.' : `Fetched from IMD. Refreshes every ${REFRESH_INTERVAL_MS / 1_000} seconds.`}</span></>}
         </div>
         <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
       </section>
@@ -123,12 +153,8 @@ export function App() {
       </div>
 
       <section className="questions-section" aria-labelledby="questions-heading">
-        <div className="section-heading"><div><h2 id="questions-heading">Latest oracle questions</h2><p className="section-description">Real questions. Answers from the swarm.</p></div><span className="questions-symbol" aria-hidden="true"><Icon name="activity" /></span></div>
-        {snapshot ? snapshot.questions.length > 0
-          ? <ol className="questions-list">{snapshot.questions.map((request) => <QuestionCard request={request} now={now} key={request.id} />)}</ol>
-          : <div className="empty-state"><Icon name="globe" /><h3>No oracle questions yet</h3><p>New requests will appear here automatically.<br />You can also select Refresh to check again.</p></div>
-          : failed ? <div className="empty-state"><Icon name="globe" /><h3>Questions are unavailable</h3><p>Retry the connection above to load the latest questions.</p></div>
-          : <QuestionLoading />}
+        <div className="section-heading"><h2 id="questions-heading">Latest oracle questions</h2><span className="questions-symbol" aria-hidden="true"><Icon name="activity" /></span></div>
+        <QuestionResults questions={snapshot?.questions} now={now} failed={failed} />
       </section>
     </main>
     <footer className="site-footer shell"><span>A window into the IMD swarm.</span><a href="https://imd.fun">Explore IMD <Icon name="arrow" /></a></footer>

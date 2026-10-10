@@ -157,7 +157,7 @@ main.shell { container-type: inline-size; }
 
 .questions-section { margin-block-start: var(--space-7); }
 .questions-section .section-heading { margin-block-end: var(--space-5); }
-.section-description { margin-block-start: var(--space-2); color: var(--color-text-muted); font-size: var(--text-label); }
+.questions-reserved > .empty-state { position: sticky; inset-block-start: var(--space-4); }
 .questions-symbol { display: grid; place-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-control); inline-size: 2.75rem; block-size: 2.75rem; flex: none; color: var(--color-text-muted); }
 .questions-list { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
 .questions-list li { min-inline-size: 0; }

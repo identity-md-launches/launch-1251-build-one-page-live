@@ -141,6 +141,102 @@ test('ticks age, refreshes at thirty seconds, retains disclosure, and clears sta
   await expect(page.locator('.question-card')).toHaveCount(0);
 });
 
+const readingRequests = requests.map((request) => ({
+  ...request, question: 'What is the state of the network? '.repeat(40),
+}));
+
+async function openReadingPosition(page: Page) {
+  await page.goto('./');
+  await ready(page);
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.question-card summary').nth(6).click();
+  await expect(page.locator('.question-card').nth(6)).toHaveAttribute('open', '');
+  await page.evaluate(() => scrollTo(0, 2200));
+}
+
+const readingGeometry = (page: Page) => page.evaluate(() => ({
+  height: document.documentElement.scrollHeight, y: scrollY,
+}));
+
+for (const trigger of ['delayed poll', 'long suspension', 'focus', 'visibilitychange'] as const) {
+  test(`${trigger} preserves mounted questions, expansion and reading position`, async ({ page }) => {
+    await page.clock.install();
+    await page.clock.pauseAt(new Date(Date.now() + 1000));
+    let hold = false;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    await page.route('https://api.imd.fun/**', async (route) => {
+      if (hold) await gate;
+      await route.fulfill({ json: route.request().url().endsWith('/swarm') ? { health } : { requests: readingRequests } });
+    });
+    await openReadingPosition(page);
+    const before = await readingGeometry(page);
+    const seventh = await page.locator('.question-card').nth(6).elementHandle();
+    await page.clock.runFor(30_000);
+    await ready(page);
+    expect(await readingGeometry(page)).toEqual(before);
+    hold = true;
+    if (trigger === 'delayed poll' || trigger === 'long suspension') {
+      await page.clock.fastForward(trigger === 'delayed poll' ? 30_001 : 300_001);
+    } else {
+      await page.clock.setSystemTime(new Date(await page.evaluate(() => Date.now()) + 60_000));
+      await page.evaluate((event) => (event === 'focus' ? window : document).dispatchEvent(new Event(event)), trigger);
+    }
+    await expect(page.locator('.live-label')).toHaveText('Refreshing');
+    await expect(page.locator('.updated')).toHaveText(/Updated (30|60|300)s ago/);
+    await expect(page.getByText('Refreshing network data. Showing last received values.')).toBeVisible();
+    await expect(page.locator('.question-card')).toHaveCount(10);
+    await expect(page.locator('.question-card').nth(6)).toHaveAttribute('open', '');
+    expect(await seventh!.evaluate((element) => element.isConnected)).toBe(true);
+    expect(await readingGeometry(page)).toEqual(before);
+    release();
+    await ready(page);
+    await expect(page.locator('.updated')).toHaveText('Updated 0s ago');
+    await expect(page.locator('.question-card').nth(6)).toHaveAttribute('open', '');
+    expect(await seventh!.evaluate((element) => element.isConnected)).toBe(true);
+    expect(await readingGeometry(page)).toEqual(before);
+  });
+}
+
+for (const failure of ['HTTP error', 'timeout', 'offline'] as const) {
+  test(`${failure} clears unavailable data without collapsing the reading area`, async ({ page, context }) => {
+    await page.clock.install();
+    await page.clock.pauseAt(new Date(Date.now() + 1000));
+    await mockApi(page, { oracles: { requests: readingRequests } });
+    await openReadingPosition(page);
+    const before = await readingGeometry(page);
+    if (failure === 'offline') {
+      await context.setOffline(true);
+    } else {
+      await page.route('https://api.imd.fun/swarm', (route) => failure === 'timeout'
+        ? undefined : route.fulfill({ status: 503, body: 'Unavailable' }));
+      await page.clock.fastForward(30_001);
+      if (failure === 'timeout') {
+        await expect(page.locator('.live-label')).toHaveText('Refreshing');
+        expect(await readingGeometry(page)).toEqual(before);
+        await page.clock.runFor(12_001);
+      }
+    }
+    await expect(page.locator('.live-label')).toHaveText('Unavailable');
+    for (const metric of await page.locator('[data-metric]').all()) await expect(metric).toHaveText('—Unavailable');
+    await expect(page.locator('.service-status')).toHaveText(['Unknown', 'Unknown', 'Unknown']);
+    await expect(page.locator('.question-card')).toHaveCount(0);
+    await expect(page.locator('.question-text, .attestation, .status-badge')).toHaveCount(0);
+    expect(await readingGeometry(page)).toEqual(before);
+    const message = page.getByRole('heading', { name: 'Questions are unavailable' });
+    await expect(message).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Retry network connection' })).toBeEnabled();
+    if (failure === 'offline') await context.setOffline(false);
+    else {
+      await page.unroute('https://api.imd.fun/swarm');
+      await page.route('https://api.imd.fun/swarm', (route) => route.fulfill({ json: { health } }));
+      await page.getByRole('button', { name: 'Retry network connection' }).click();
+    }
+    await ready(page);
+    await expect(page.locator('.question-card')).toHaveCount(10);
+  });
+}
+
 test('times out a hanging API and never labels old data live', async ({ page }) => {
   await page.clock.install();
   await page.route('https://api.imd.fun/**', () => {});

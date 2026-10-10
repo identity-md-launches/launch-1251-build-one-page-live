@@ -33,14 +33,12 @@ export function useLiveNetwork() {
       }
       const request = new AbortController();
       active = request;
-      // Keep the last successful snapshot during a short refresh, explicitly
-      // labeled "Refreshing". Never retain a snapshot after failure or expiry.
-      setState((previous) => {
-        const fresh = previous.updatedAt !== null && Date.now() - previous.updatedAt <= REFRESH_INTERVAL_MS;
-        return fresh && previous.snapshot
+      // Timer delays and tab suspension do not invalidate reading state.
+      // Retain the snapshot with its age while refreshing; failure clears it.
+      setNow(Date.now());
+      setState((previous) => previous.snapshot
           ? { ...previous, phase: 'refreshing' }
-          : initialState;
-      });
+          : initialState);
       const timeout = window.setTimeout(() => request.abort(), REQUEST_TIMEOUT_MS);
       try {
         const snapshot = await fetchSnapshot(request.signal);
@@ -69,8 +67,6 @@ export function useLiveNetwork() {
       if (lastSuccess === null || Date.now() - lastSuccess >= REFRESH_INTERVAL_MS) {
         active?.abort();
         active = null;
-        lastSuccess = null;
-        setState(initialState);
         void refresh();
       }
     };
@@ -82,8 +78,6 @@ export function useLiveNetwork() {
       setNow(current);
       // This also covers delayed timers after device sleep / background throttling.
       if (lastSuccess !== null && current - lastSuccess > REFRESH_INTERVAL_MS + REQUEST_TIMEOUT_MS) {
-        lastSuccess = null;
-        setState(initialState);
         void refresh();
       }
     }, 1_000);
