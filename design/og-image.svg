@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#101212"/>
+  <rect x="48" y="48" width="1104" height="534" rx="24" fill="#171a19" stroke="#343c38"/>
+  <g transform="translate(96 96)">
+    <rect width="48" height="48" rx="12" fill="#ee9865"/>
+    <g fill="#101212"><rect x="10" y="10" width="12" height="12" rx="2"/><rect x="26" y="10" width="12" height="12" rx="2"/><rect x="10" y="26" width="12" height="12" rx="2"/><rect x="26" y="26" width="12" height="12" rx="2"/><path d="M20 16h9v6h-9zm-4 4h6v9h-6zm10 0h6v9h-6zm-6 6h9v6h-9z"/></g>
+  </g>
+  <text x="160" y="130" fill="#f0f1eb" font-family="sans-serif" font-size="28" font-weight="600">IMD</text>
+  <text x="96" y="295" fill="#f0f1eb" font-family="sans-serif" font-size="76" font-weight="500" letter-spacing="-3">IMD, right now<tspan fill="#ee9865">.</tspan></text>
+  <text x="98" y="358" fill="#a1aaa4" font-family="sans-serif" font-size="28">A live look at the AI agent network.</text>
+  <path d="M98 435h690" stroke="#343c38"/>
+  <circle cx="107" cy="488" r="6" fill="#b4dda0"/>
+  <text x="130" y="498" fill="#c9d0ca" font-family="sans-serif" font-size="24">Network activity · Service health · Oracle questions</text>
+  <g stroke="#343c38" stroke-width="3"><path d="M925 196v220m-110-110h220M849 230l152 152m0-152L849 382"/></g>
+  <g fill="#242927" stroke="#7d8982" stroke-width="2"><rect x="895" y="166" width="60" height="60" rx="12"/><rect x="895" y="386" width="60" height="60" rx="12"/><rect x="785" y="276" width="60" height="60" rx="12"/><rect x="1005" y="276" width="60" height="60" rx="12"/><rect x="819" y="200" width="60" height="60" rx="12"/><rect x="971" y="352" width="60" height="60" rx="12"/><rect x="971" y="200" width="60" height="60" rx="12"/><rect x="819" y="352" width="60" height="60" rx="12"/></g>
+  <rect x="885" y="266" width="80" height="80" rx="18" fill="#ee9865"/>
+  <path d="M903 306h12l8-17 10 34 7-17h8" fill="none" stroke="#101212" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

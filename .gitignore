@@ -1,0 +1,11 @@
+# Path budget: this file <= 512 bytes. dist/ is intentionally included.
+**/node_modules/
+**/.vite/
+**/.cache/
+**/.npm/
+**/npm-cache/
+**/playwright-report/
+**/test-results/
+**/*.tsbuildinfo
+.playwright-mcp/
+test/scratch/
